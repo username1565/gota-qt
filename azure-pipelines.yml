@@ -71,7 +71,12 @@ jobs:
       downloadType: single
       artifactName: linux64
       downloadPath: '$(Build.ArtifactStagingDirectory)'
-      
+    
+  - script: |
+      sudo apt-get update
+      sudo apt-get install -y build-essential libudev-dev
+    displayName: Install dependences
+
   - script: |
       unzip $(Build.ArtifactStagingDirectory)/linux64/\*.zip
       mkdir gota/bin
@@ -80,7 +85,7 @@ jobs:
     displayName: Unzip daemons build artifact
 
   - script: |
-      mkdir gota-gui && cd gota-gui
+      mkdir gota-qt && cd gota-qt
       git init
       git remote add origin https://user:$(GithubPAT)@github.com/$(desktopRepo)
       git fetch --depth 1 origin $(Build.SourceBranch)
@@ -93,16 +98,16 @@ jobs:
     displayName: Install qt
 
   - script: |
-      mkdir gota-gui/build && cd gota-gui/build
+      mkdir gota-qt/build && cd gota-qt/build
       qmake ../src/gota-gui.pro && make -j$(nproc)
     displayName: Build desktop
 
   - script: |
       zip -j -r $(Build.ArtifactStagingDirectory)/$(System.TeamProject)-desktop-$(Build.SourceBranchName)-linux64.zip \
-        gota-gui/bin/gotad \
-        gota-gui/bin/walletd \
+        gota-qt/bin/gotad \
+        gota-qt/bin/walletd \
         gota/bin/minerd \
-        gota-gui/bin/gota-gui
+        gota-qt/bin/gota-gui
     displayName: Zip desktop
 
   - task: PublishBuildArtifacts@1
@@ -118,7 +123,7 @@ jobs:
     vmImage: macOS-10.14
   dependsOn: WaitForDaemonsBuild
   variables:
-    MACOSX_DEPLOYMENT_TARGET: 10.11
+    MACOSX_DEPLOYMENT_TARGET: 10.14
   condition: |
       succeeded()
   steps:
@@ -143,7 +148,7 @@ jobs:
     displayName: Unzip daemons build artifact
 
   - script: |
-      mkdir gota-gui && cd gota-gui
+      mkdir gota-qt && cd gota-qt
       git init
       git remote add origin https://user:$(GithubPAT)@github.com/$(desktopRepo)
       git fetch --depth 1 origin $(Build.SourceBranch)
@@ -151,23 +156,29 @@ jobs:
     displayName: Clone desktop code
 
   - script: |
-      curl -L -O https://raw.githubusercontent.com/Homebrew/homebrew-core/8d4d48f0bb552b7b107119aeef59f141ce1f72c3/Formula/qt.rb
-      depends_on :macos => :mountain_lion
-      sed -i '' 's/depends_on :macos => :mountain_lion/#depends_on :macos => :mountain_lion/g' qt.rb
-      brew install qt.rb
-    displayName: Install qt 5.10.1
+      brew update
+      brew install qt@5
+    displayName: Install qt 5
 
   - script: |
-      mkdir gota-gui/build && cd gota-gui/build
-      /usr/local/opt/qt/bin/qmake ../src/gota-gui.pro && make -j
+      export PATH="/usr/local/opt/qt@5/bin:$PATH"
+      export LDFLAGS="-L/usr/local/opt/qt@5/lib"
+      export CPPFLAGS="-I/usr/local/opt/qt@5/include"
+      export PKG_CONFIG_PATH="/usr/local/opt/qt@5/lib/pkgconfig"
+      mkdir gota-qt/build && cd gota-qt/build
+      qmake ../src/gota-gui.pro && make -j
     displayName: Build desktop code
 
   - script: |
-      /usr/local/opt/qt/bin/macdeployqt gota-gui/bin/gota-gui.app
+      export PATH="/usr/local/opt/qt@5/bin:$PATH"
+      export LDFLAGS="-L/usr/local/opt/qt@5/lib"
+      export CPPFLAGS="-I/usr/local/opt/qt@5/include"
+      export PKG_CONFIG_PATH="/usr/local/opt/qt@5/lib/pkgconfig"
+      macdeployqt gota-qt/bin/gota-gui.app
     displayName: Call macdeployqt
 
   - script: |
-      cd gota-gui/bin
+      cd gota-qt/bin
       zip -y -r $(Build.ArtifactStagingDirectory)/$(System.TeamProject)-desktop-$(Build.SourceBranchName)-macos.zip gota-gui.app
     displayName: Zip app folder
 
@@ -255,7 +266,7 @@ jobs:
     displayName: Install Jom
 
   - bash: |
-      mkdir gota-gui && cd gota-gui
+      mkdir gota-qt && cd gota-qt
       git init
       git remote add origin https://user:$(GithubPAT)@github.com/$(desktopRepo)
       git fetch --depth 1 origin $(Build.SourceBranch)
@@ -263,7 +274,7 @@ jobs:
     displayName: Clone desktop code
 
   - bash: |
-      mkdir gota-gui/build && cd gota-gui/build
+      mkdir gota-qt/build && cd gota-qt/build
       echo "call \"$VCINSTALLDIR\Auxiliary\Build\vcvars$(arch).bat\"" > compile.bat
       echo "\"$QTDIR\bin\qmake.exe\" ..\src\gota-gui.pro" >> compile.bat
       echo "..\..\jom\jom -j %NUMBER_OF_PROCESSORS%" >> compile.bat
@@ -271,7 +282,7 @@ jobs:
     displayName: Build desktop
 
   - bash: |
-      cd gota-gui/bin
+      cd gota-qt/bin
       echo "call \"$VCINSTALLDIR\Auxiliary\Build\vcvars$(arch).bat\"" > deploy.bat
       echo "\"$QTDIR/bin/windeployqt.exe\" ." >> deploy.bat
       ./deploy.bat
@@ -280,7 +291,7 @@ jobs:
   - bash: |
       VCRedistVersion=`cat "$VCINSTALLDIR\Auxiliary\Build\Microsoft.VCRedistVersion.default.txt"`
       VCMergeModulesDir="$VCINSTALLDIR\Redist\MSVC\\$VCRedistVersion\MergeModules"
-      cd gota-gui/Windows\ Installer
+      cd gota-qt/Windows\ Installer
       "$(wixInstallPath)"/candle.exe -arch $(installerArch) \
         -dVersion=$(Build.SourceBranchName) \
         -dProductVersion=`date +%y.%m.%d` \
@@ -291,7 +302,7 @@ jobs:
     displayName: Build Wix installer
 
   - bash: |
-      cd gota-gui/bin
+      cd gota-qt/bin
       7z a "$(Build.ArtifactStagingDirectory)"/gota-desktop-$(Build.SourceBranchName)-win$(arch)-portable.zip .
     displayName: Zip desktop
 
@@ -304,7 +315,7 @@ jobs:
 #############################
 - job: CreateGithubRelease
   pool:
-    vmImage: ubuntu-18.04
+    vmImage: ubuntu-16.04
   dependsOn:
   - Linux
   - Mac
