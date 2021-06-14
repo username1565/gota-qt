@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Gota Wallet
+Comment=Gota wallet
+Exec=gotawallet %U
+Terminal=false
+Type=Application
+Icon=gota
+MimeType=x-scheme-handler/gota;
+Categories=Office;Finance;
