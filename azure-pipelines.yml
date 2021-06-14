@@ -65,7 +65,7 @@ jobs:
     displayName: Download daemons build artifacts
     inputs:
       buildType: specific
-      project: gotanetwork
+      project: Gota
       pipeline: Gotanetwork.gota
       buildVersionToDownload: 'latest'
       downloadType: single
@@ -128,7 +128,7 @@ jobs:
     displayName: Download daemons build artifacts
     inputs:
       buildType: specific
-      project: gotanetwork
+      project: Gota
       pipeline: Gotanetwork.gota
       buildVersionToDownload: 'latest'
       downloadType: single
@@ -213,7 +213,7 @@ jobs:
     displayName: Download daemons build artifacts
     inputs:
       buildType: specific
-      project: gotanetwork
+      project: Gota
       pipeline: Gotanetwork.gota
       buildVersionToDownload: 'latest'
       downloadType: single
