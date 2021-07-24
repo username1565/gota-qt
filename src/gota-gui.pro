@@ -15,7 +15,7 @@ TEMPLATE = app
 macx: QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.15
 macx: ICON = images/gota.icns
 win32: RC_ICONS = images/gota.ico
-win32: VERSION = 0.0.0.1
+win32: VERSION = 0.0.1.0
 
 #QMAKE_CXXFLAGS += -fno-omit-frame-pointer -fsanitize=address,undefined
 #LIBS += -lasan -lubsan
